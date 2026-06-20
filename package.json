@@ -1,0 +1,16 @@
+{
+  "name": "gdw-agents",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Independent GDW Advisor Agent repository for project advice, confirmed knowledge, and integration drafts.",
+  "type": "module",
+  "scripts": {
+    "advisor:simulate": "node scripts/gdw-advisor/index.js simulate",
+    "advisor:context": "node scripts/gdw-advisor/index.js context",
+    "advisor:feishu:search": "node scripts/gdw-advisor/index.js feishu:search",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Runtime outputs. Keep README files, do not commit private project memory by default.
+data/confirmed/*.json
+data/snapshots/*.json
+data/snapshots/*.md
+
+# Logs and local scratch.
+*.log
+tmp/
+coverage/

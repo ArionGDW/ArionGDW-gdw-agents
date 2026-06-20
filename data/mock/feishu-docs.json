@@ -1,0 +1,39 @@
+{
+  "documents": [
+    {
+      "id": "mock-prd-v12",
+      "title": "GDW V1.2 PRD 阶段摘要",
+      "type": "doc",
+      "updatedAt": "2026-06-09T08:30:00.000Z",
+      "tags": ["PRD", "V1.2", "Session", "分享"],
+      "facts": {
+        "currentVersion": "v1.2.0",
+        "stage": "V1.2 产品转向落地",
+        "primaryGoal": "验证用户是否愿意记录、查看、分享并持续使用网球生活作品"
+      },
+      "content": "V1.2 从网球训练工具转向刚打完网球生活记录产品。重点验证 Session 记录、作品查看、分享动作、留存和邀请转化。当前三 Tab 为首页 / 开打 / 我的。"
+    },
+    {
+      "id": "mock-decision-data-boundary",
+      "title": "GDW Advisor 数据边界决策",
+      "type": "doc",
+      "updatedAt": "2026-06-20T10:00:00.000Z",
+      "tags": ["Advisor", "数据留存", "飞书"],
+      "facts": {
+        "advisorRetention": "只保存确认后的摘要、决策、建议"
+      },
+      "content": "Advisor 首版不保存完整群聊和完整会议转录。记录结论、更新进展、确认后的建议可以沉淀为知识。飞书写回必须由用户明确确认。"
+    },
+    {
+      "id": "mock-playbook-growth",
+      "title": "GDW 增长与渠道讨论摘要",
+      "type": "doc",
+      "updatedAt": "2026-06-18T12:00:00.000Z",
+      "tags": ["渠道", "增长", "种子用户"],
+      "facts": {
+        "growthFocus": "Session 分享率、用户分享率、邀请转化率"
+      },
+      "content": "种子用户阶段先验证是否愿意记录、查看作品、分享和邀请。渠道合作优先找能带来真实 Session 记录和反馈的网球场景。"
+    }
+  ]
+}

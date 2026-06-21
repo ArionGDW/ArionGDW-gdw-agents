@@ -53,3 +53,28 @@ test("generates Codex task package", () => {
   assert.match(response.codexTask, /任务/);
   assert.match(response.codexTask, /不直接写回飞书/);
 });
+
+test("includes live Feishu document snippets in formatted response", () => {
+  const event = createEvent({
+    artifactType: "advice_request",
+    text: "V1.2 本周怎么推进？"
+  });
+  const response = new AdvisorEngine().respond({
+    event,
+    projectContext,
+    feishuResults: [{
+      title: "GDW Advisor 测试文档",
+      source: "feishu_live",
+      snippet: "阶段：V1.2 产品转向落地。目标：验证 Advisor 是否能读取飞书文档内容。",
+      facts: {
+        stage: "V1.2 产品转向落地"
+      }
+    }],
+    confirmedKnowledge: []
+  });
+  const formatted = formatAdvisorResponse(response);
+
+  assert.match(formatted, /飞书文档摘录/);
+  assert.match(formatted, /GDW Advisor 测试文档/);
+  assert.match(formatted, /飞书真实文档/);
+});

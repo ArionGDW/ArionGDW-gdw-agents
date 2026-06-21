@@ -37,3 +37,21 @@ Advisor 不直接改代码。需要工程执行时，输出：
 - 不允许自动写回飞书的提醒
 
 工程执行结果通过 `@GDW Advisor 更新进展: ...` 回流知识库。
+
+## 使用真实飞书文档生成建议
+
+```bash
+npm run advisor:simulate -- \
+  --message "@GDW Advisor 建议: V1.2 本周怎么推进？" \
+  --feishu-url "https://your-domain.feishu.cn/wiki/..."
+```
+
+没有传 `--feishu-url` 时，CLI 继续使用本地 mock 飞书资料。传入飞书链接时，Advisor 会读取真实 Wiki / docx 文档，并在输出中列出飞书文档摘录和证据来源。
+
+也可以在 `.env` 固定配置权威上下文文档：
+
+```env
+FEISHU_CONTEXT_URLS=https://your-domain.feishu.cn/wiki/xxx,https://your-domain.feishu.cn/wiki/yyy
+```
+
+配置后，`advisor:simulate` 不需要每次传 `--feishu-url`，会自动读取这些真实飞书文档。mock 资料只保留给本地开发测试使用。

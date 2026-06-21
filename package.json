@@ -9,10 +9,15 @@
     "advisor:context": "node scripts/gdw-advisor/index.js context",
     "advisor:feishu:check": "node scripts/gdw-advisor/index.js feishu:check",
     "advisor:feishu:read": "node scripts/gdw-advisor/index.js feishu:read",
+    "advisor:feishu:server": "node scripts/gdw-advisor/server.js",
+    "advisor:feishu:longconn": "node scripts/gdw-advisor/longconn.js",
     "advisor:feishu:search": "node scripts/gdw-advisor/index.js feishu:search",
     "test": "node --test"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.67.0"
   }
 }

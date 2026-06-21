@@ -28,3 +28,20 @@
 - 云文档搜索 API。
 - 文档读取 API。
 - 写回审批或人工确认流程。
+
+## 事件回调服务
+
+本地启动：
+
+```bash
+npm run advisor:feishu:server
+```
+
+默认监听：
+
+```text
+http://127.0.0.1:8787/health
+http://127.0.0.1:8787/feishu/events
+```
+
+飞书后台需要公网 HTTPS 回调地址。开发阶段可以用 ngrok、Cloudflare Tunnel 或其他内网穿透工具把本地 `8787` 端口暴露出去，再把公网地址的 `/feishu/events` 配到「事件与回调」。

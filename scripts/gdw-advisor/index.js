@@ -42,6 +42,10 @@ async function main(argv = process.argv.slice(2)) {
 
 async function simulate(argv) {
   const message = optionValue(argv, "--message") || positional(argv).join(" ") || "@GDW Advisor 建议: V1.2 本周怎么推进？";
+  const feishuUrls = [
+    ...optionValues(argv, "--feishu-url"),
+    ...splitUrlList(process.env.FEISHU_CONTEXT_URLS)
+  ];
   const channel = new ChannelAdapter();
   const event = channel.toEvent({
     text: message,
@@ -52,7 +56,9 @@ async function simulate(argv) {
 
   const repoContext = await new RepoContext().load();
   const feishu = new FeishuAdapter();
-  const feishuResults = await feishu.search(event.text || message);
+  const feishuResults = feishuUrls.length
+    ? await feishu.readDocumentsForAdvisor(feishuUrls)
+    : await feishu.search(event.text || message);
   const confirmedKnowledge = await new KnowledgeStore().listConfirmed();
   const response = new AdvisorEngine().respond({
     event,
@@ -146,8 +152,11 @@ Usage:
   npm run advisor:context
   npm run advisor:feishu:check
   npm run advisor:feishu:read -- <feishu-doc-or-wiki-url>
+  npm run advisor:simulate -- --message "@GDW Advisor 建议: V1.2 本周怎么推进？" --feishu-url <feishu-doc-or-wiki-url>
   npm run advisor:simulate -- --message "@GDW Advisor 建议: V1.2 本周怎么推进？"
   npm run advisor:feishu:search -- V1.2
+
+Set FEISHU_CONTEXT_URLS in .env to make advisor:simulate read live Feishu documents by default.
 `);
 }
 
@@ -155,6 +164,17 @@ function optionValue(argv, name) {
   const index = argv.indexOf(name);
   if (index === -1) return null;
   return argv[index + 1] || "";
+}
+
+function optionValues(argv, name) {
+  const values = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === name && argv[index + 1]) {
+      values.push(argv[index + 1]);
+      index += 1;
+    }
+  }
+  return values;
 }
 
 function positional(argv) {
@@ -168,6 +188,13 @@ function positional(argv) {
     values.push(value);
   }
   return values;
+}
+
+function splitUrlList(value = "") {
+  return String(value)
+    .split(/[\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 main().catch((error) => {

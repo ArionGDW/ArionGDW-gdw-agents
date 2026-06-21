@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   FeishuAdapter,
   extractTextFromBlock,
+  inferFactsFromText,
   parseFeishuDocumentUrl
 } from "../scripts/gdw-advisor/adapters/feishu-adapter.js";
 
@@ -85,6 +86,18 @@ test("extracts text runs from docx block", () => {
   });
 
   assert.equal(text, "hello world");
+});
+
+test("infers project facts from simple Feishu document text", () => {
+  const facts = inferFactsFromText(`
+项目：刚打完（GDW）
+阶段：V1.2 产品转向落地
+目标：验证用户是否愿意记录、查看、分享并持续使用网球生活作品。
+阶段目标：验证用户是否愿意记录、查看、分享并持续使用网球生活作品。
+`);
+
+  assert.equal(facts.stage, "V1.2 产品转向落地");
+  assert.equal(facts.primaryGoal, "验证用户是否愿意记录、查看、分享并持续使用网球生活作品。");
 });
 
 test("reads wiki-backed docx with mocked Feishu APIs", async () => {

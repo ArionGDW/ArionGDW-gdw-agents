@@ -19,6 +19,7 @@ export class AdvisorEngine {
       risks: buildRisks({ topic, conflicts }),
       nextSteps: buildNextSteps({ topic, command, event }),
       questions: buildQuestions({ topic, conflicts }),
+      feishuSnippets: buildFeishuSnippets(feishuResults),
       evidence: buildEvidence({ projectContext, feishuResults, confirmedKnowledge }),
       codexTask: command === "codex_task" ? buildCodexTask({ event, projectContext, feishuResults }) : null,
       claudePrompt: command === "codex_task" ? buildClaudePrompt({ event, projectContext }) : null,
@@ -55,6 +56,10 @@ export function formatAdvisorResponse(response) {
 
   if (response.claudePrompt) {
     parts.push("", "Claude 讨论 Prompt", response.claudePrompt);
+  }
+
+  if (response.feishuSnippets?.length) {
+    parts.push("", "飞书文档摘录", bulletList(response.feishuSnippets));
   }
 
   parts.push("", "证据来源", bulletList(response.evidence));
@@ -99,11 +104,19 @@ function buildConclusion({ topic, command, conflicts }) {
 
 function buildWhy({ projectContext, feishuResults, confirmedKnowledge, conflicts }) {
   const facts = projectContext.facts || {};
+  const liveDocs = feishuResults.filter((doc) => doc.source === "feishu_live");
+  const mockDocs = feishuResults.filter((doc) => doc.source !== "feishu_live");
   const items = [
     `仓库阶段显示为 ${facts.stage || "unknown"}，目标是 ${facts.primaryGoal || "unknown"}。`,
-    "当前规则是飞书负责 PRD/阶段/产品决策，仓库负责代码、页面、数据模型和自动化事实。",
-    `本次检索到 ${feishuResults.length} 条飞书候选资料，已沉淀确认知识 ${confirmedKnowledge.length} 条。`
+    "当前规则是飞书负责 PRD/阶段/产品决策，仓库负责代码、页面、数据模型和自动化事实。"
   ];
+
+  if (liveDocs.length) {
+    items.push(`本次读取了 ${liveDocs.length} 个飞书真实文档：${liveDocs.map((doc) => doc.title).join("、")}。`);
+  } else {
+    items.push(`本次检索到 ${mockDocs.length} 条飞书候选资料。`);
+  }
+  items.push(`已沉淀确认知识 ${confirmedKnowledge.length} 条。`);
 
   if (conflicts.length) {
     items.push("存在冲突字段，Advisor 不能把任一来源直接当成最终事实。");
@@ -217,9 +230,19 @@ function buildEvidence({ projectContext, feishuResults, confirmedKnowledge }) {
   const docs = Object.values(projectContext.docs || {})
     .filter((doc) => doc.exists)
     .map((doc) => `仓库: ${doc.relativePath}`);
-  const feishu = feishuResults.map((doc) => `飞书: ${doc.title}`);
+  const feishu = feishuResults.map((doc) => {
+    const prefix = doc.source === "feishu_live" ? "飞书真实文档" : "飞书候选";
+    return `${prefix}: ${doc.title}`;
+  });
   const knowledge = confirmedKnowledge.slice(0, 3).map((item) => `确认知识: ${item.artifactType} ${item.occurredAt}`);
   return [...docs, ...feishu, ...knowledge].slice(0, 10);
+}
+
+function buildFeishuSnippets(feishuResults) {
+  return feishuResults
+    .filter((doc) => doc.source === "feishu_live" && doc.snippet)
+    .slice(0, 3)
+    .map((doc) => `${doc.title}: ${compact(doc.snippet, 240)}`);
 }
 
 function buildCodexTask({ event, projectContext, feishuResults }) {
@@ -227,7 +250,7 @@ function buildCodexTask({ event, projectContext, feishuResults }) {
   const sourceList = [
     "飞书用于 PRD/阶段/产品决策",
     "网球 APP 仓库用于当前代码/页面/数据模型事实",
-    ...feishuResults.slice(0, 3).map((doc) => `飞书候选: ${doc.title}`)
+    ...feishuResults.slice(0, 3).map((doc) => `${doc.source === "feishu_live" ? "飞书真实文档" : "飞书候选"}: ${doc.title}`)
   ];
 
   return [
@@ -267,4 +290,9 @@ function bulletList(items) {
 function numberedList(items) {
   if (!items?.length) return "1. none";
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
+}
+
+function compact(text, maxLength) {
+  const value = String(text || "").replace(/\s+/g, " ").trim();
+  return value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
 }

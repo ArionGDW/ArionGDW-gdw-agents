@@ -155,6 +155,30 @@ export class FeishuAdapter {
     throw new Error(`Unsupported Feishu URL type: ${parsed.type}`);
   }
 
+  async readDocumentsForAdvisor(urls = []) {
+    const results = [];
+    for (const url of urls) {
+      const document = await this.readDocumentFromUrl(url);
+      if (document.unsupported) {
+        results.push({
+          id: document.objToken || document.token,
+          title: document.title || "Unsupported Feishu document",
+          type: document.objType || document.sourceType || "unknown",
+          source: "feishu_live",
+          url,
+          tags: ["live", "unsupported"],
+          snippet: document.message || "",
+          facts: {},
+          content: "",
+          unsupported: true
+        });
+        continue;
+      }
+      results.push(toAdvisorResult(document, url));
+    }
+    return results;
+  }
+
   async getWikiNode(wikiToken) {
     const result = await this.getTenantAccessToken();
     if (!result.ok) {
@@ -244,6 +268,28 @@ export class FeishuAdapter {
     return payload;
   }
 
+  async sendTextMessage(receiveId, text, options = {}) {
+    const result = await this.getTenantAccessToken();
+    if (!result.ok) {
+      throw new Error(`Cannot get Feishu tenant access token: ${result.message}`);
+    }
+
+    const receiveIdType = options.receiveIdType || "chat_id";
+    const url = new URL(`${this.baseUrl}/open-apis/im/v1/messages`);
+    url.searchParams.set("receive_id_type", receiveIdType);
+
+    return this.fetchFeishuJson(url, result.token, {
+      method: "POST",
+      body: JSON.stringify({
+        receive_id: receiveId,
+        msg_type: "text",
+        content: JSON.stringify({
+          text: truncateFeishuText(text)
+        })
+      })
+    });
+  }
+
   buildWriteDraft(input = {}) {
     const confirmationText = input.confirmationText || "";
     const allowedByUser = requiresFeishuWriteConfirmation(confirmationText);
@@ -305,6 +351,38 @@ function toSearchResult(doc, query) {
     facts: doc.facts || {},
     content: doc.content
   };
+}
+
+function toAdvisorResult(document, url) {
+  const content = document.text || "";
+  return {
+    id: document.objToken || document.token,
+    title: document.title || "(untitled)",
+    type: document.objType || document.sourceType || "doc",
+    source: "feishu_live",
+    url,
+    updatedAt: null,
+    tags: ["live", document.sourceType, document.objType].filter(Boolean),
+    snippet: createSnippet(content, ""),
+    facts: inferFactsFromText(content),
+    content,
+    blocks: document.blocks?.length || 0
+  };
+}
+
+export function inferFactsFromText(text = "") {
+  return {
+    currentVersion: matchLabeledLine(text, ["当前版本", "版本", "Version"]),
+    stage: matchLabeledLine(text, ["当前阶段", "阶段", "Stage"]),
+    primaryGoal: matchLabeledLine(text, ["阶段目标", "产品目标", "Primary Goal"])
+  };
+}
+
+function matchLabeledLine(text, labels) {
+  const escapedLabels = labels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`^(?:[-*]\\s*)?(?:${escapedLabels.join("|")})\\s*[：:]\\s*(.+)$`, "im");
+  const match = String(text || "").match(pattern);
+  return match ? match[1].trim() : undefined;
 }
 
 function createSnippet(content = "", query = "") {
@@ -374,4 +452,10 @@ function collectTextRuns(value, parts) {
 
 function normalizeText(text) {
   return text.replace(/\u0000/g, "").trim();
+}
+
+function truncateFeishuText(text) {
+  const value = String(text || "");
+  const maxLength = 3500;
+  return value.length > maxLength ? `${value.slice(0, maxLength - 20)}\n...(已截断)` : value;
 }

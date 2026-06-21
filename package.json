@@ -7,6 +7,8 @@
   "scripts": {
     "advisor:simulate": "node scripts/gdw-advisor/index.js simulate",
     "advisor:context": "node scripts/gdw-advisor/index.js context",
+    "advisor:feishu:check": "node scripts/gdw-advisor/index.js feishu:check",
+    "advisor:feishu:read": "node scripts/gdw-advisor/index.js feishu:read",
     "advisor:feishu:search": "node scripts/gdw-advisor/index.js feishu:search",
     "test": "node --test"
   },

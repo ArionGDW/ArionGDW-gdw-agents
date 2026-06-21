@@ -4,6 +4,8 @@
 
 首版使用 mock 飞书资料，接口形态保持可替换：
 
+- `checkConnection()`：用 `FEISHU_APP_ID` / `FEISHU_APP_SECRET` 换取 tenant access token，验证凭据是否可用。
+- `readDocumentFromUrl(url)`：解析 Wiki / docx 链接，读取新版文档文本预览。
 - `search(query)`：搜索 PRD、阶段摘要、产品决策。
 - `buildWriteDraft(...)`：生成写回草稿。
 - `extractFactsFromDocs(...)`：提取可与仓库事实比对的结构化字段。

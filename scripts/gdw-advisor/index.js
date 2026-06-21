@@ -5,8 +5,10 @@ import { KnowledgeStore } from "./core/knowledge-store.js";
 import { RepoContext, formatRepoContext } from "./core/repo-context.js";
 import { ChannelAdapter } from "./adapters/channel-adapter.js";
 import { FeishuAdapter } from "./adapters/feishu-adapter.js";
+import { loadEnv } from "./core/env.js";
 
 async function main(argv = process.argv.slice(2)) {
+  await loadEnv();
   const command = argv[0] || "help";
   const rest = argv.slice(1);
 
@@ -22,6 +24,16 @@ async function main(argv = process.argv.slice(2)) {
 
   if (command === "feishu:search") {
     await searchFeishu(rest);
+    return;
+  }
+
+  if (command === "feishu:check") {
+    await checkFeishu();
+    return;
+  }
+
+  if (command === "feishu:read") {
+    await readFeishu(rest);
     return;
   }
 
@@ -81,11 +93,59 @@ async function searchFeishu(argv) {
   }
 }
 
+async function checkFeishu() {
+  const result = await new FeishuAdapter().checkConnection();
+  if (!result.ok) {
+    console.log("Feishu connection: failed");
+    console.log(`source: ${result.source}`);
+    console.log(`message: ${result.message}`);
+    if (result.status) console.log(`status: ${result.status}`);
+    if (result.code !== undefined) console.log(`code: ${result.code}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log("Feishu connection: ok");
+  console.log(`source: ${result.source}`);
+  console.log(`token: ${result.tokenPreview}`);
+  console.log(`expire: ${result.expire || "unknown"}`);
+}
+
+async function readFeishu(argv) {
+  const url = optionValue(argv, "--url") || positional(argv).join(" ");
+  if (!url) {
+    console.log("Usage: npm run advisor:feishu:read -- <feishu-doc-or-wiki-url>");
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = await new FeishuAdapter().readDocumentFromUrl(url);
+  if (result.unsupported) {
+    console.log("Feishu document read: unsupported");
+    console.log(`type: ${result.objType || "unknown"}`);
+    console.log(`message: ${result.message}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log("Feishu document read: ok");
+  console.log(`sourceType: ${result.sourceType}`);
+  console.log(`objType: ${result.objType}`);
+  console.log(`title: ${result.title || "(untitled)"}`);
+  console.log(`objToken: ${result.objToken}`);
+  console.log(`blocks: ${result.blocks.length}`);
+  console.log("");
+  console.log("Text preview:");
+  console.log((result.text || "(empty)").slice(0, 4000));
+}
+
 function printHelp() {
   console.log(`GDW Advisor CLI
 
 Usage:
   npm run advisor:context
+  npm run advisor:feishu:check
+  npm run advisor:feishu:read -- <feishu-doc-or-wiki-url>
   npm run advisor:simulate -- --message "@GDW Advisor 建议: V1.2 本周怎么推进？"
   npm run advisor:feishu:search -- V1.2
 `);

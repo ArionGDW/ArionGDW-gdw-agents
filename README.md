@@ -14,6 +14,8 @@
 
 ```bash
 npm run advisor:context
+npm run advisor:feishu:check
+npm run advisor:feishu:read -- "https://your-domain.feishu.cn/wiki/..."
 npm run advisor:simulate -- --message "@GDW Advisor 建议: V1.2 本周怎么推进？"
 npm run advisor:feishu:search -- V1.2
 npm test
@@ -38,6 +40,10 @@ test/                         node:test 测试
   解析群内 `@GDW Advisor ...` 命令，读取 mock 飞书和仓库上下文，生成建议。
 - `npm run advisor:feishu:search -- 关键词`
   搜索本地 mock 飞书资料，后续可替换成真实飞书检索。
+- `npm run advisor:feishu:check`
+  读取本地 `.env` 中的 `FEISHU_APP_ID` / `FEISHU_APP_SECRET`，验证飞书自建应用凭据是否能换取 tenant access token。
+- `npm run advisor:feishu:read -- <飞书文档或知识库链接>`
+  读取 Wiki 节点背后的新版文档内容，并输出纯文本预览。
 - `npm test`：验证敏感最小化、飞书写回确认、群命令、会议事件和任务包生成。
 
 ## 数据边界
